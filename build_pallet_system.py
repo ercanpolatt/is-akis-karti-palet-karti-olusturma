@@ -1,195 +1,16 @@
 import os
 import sys
 import win32com.client
+from datetime import datetime, timedelta
 
 def rgb_to_int(r, g, b):
-    # Excel uses 0xBBGGRR format (BGR integer)
+    """Excel uses 0xBBGGRR format (BGR integer)."""
     return r + (g << 8) + (b << 16)
-
-def format_field(ws, r, c_start, c_end, lbl, val, is_big=False):
-    # Header label
-    lbl_rng = ws.Range(ws.Cells(r, c_start), ws.Cells(r, c_end))
-    lbl_rng.Merge()
-    lbl_rng.Value = lbl
-    lbl_rng.Font.Name = "Segoe UI"
-    lbl_rng.Font.Size = 8
-    lbl_rng.Font.Bold = True
-    lbl_rng.Font.Color = rgb_to_int(100, 116, 139) # Slate grey
-    lbl_rng.Interior.Color = rgb_to_int(241, 245, 249) # Soft light grey
-    lbl_rng.HorizontalAlignment = -4108
-    lbl_rng.VerticalAlignment = -4108
-    lbl_rng.Borders.Color = rgb_to_int(203, 213, 225)
-
-    # Value cell
-    val_rng = ws.Range(ws.Cells(r + 1, c_start), ws.Cells(r + 1, c_end))
-    val_rng.Merge()
-    val_rng.Value = val
-    val_rng.Font.Name = "Segoe UI"
-    val_rng.Font.Size = 11 if is_big else 10
-    val_rng.Font.Bold = True
-    val_rng.Font.Color = rgb_to_int(15, 23, 42)
-    val_rng.Interior.Color = rgb_to_int(255, 255, 255)
-    val_rng.HorizontalAlignment = -4108
-    val_rng.VerticalAlignment = -4108
-    val_rng.Borders.Color = rgb_to_int(203, 213, 225)
-
-def build_single_card_py(ws, r, card_no, total_cards, cust_name, f_type, variety, lot_no, order_no, sow_date, del_date, cell_count, viols_per_pallet, total_seedlings, status_text, responsible):
-    r_header = r
-    r_sub = r + 1
-    r1 = r + 2
-    r2 = r + 4
-    r3 = r + 6
-    r4 = r + 8
-    r5 = r + 10
-    r_footer = r + 12
-
-    # Row heights
-    ws.Rows(r_header).RowHeight = 28
-    ws.Rows(r_sub).RowHeight = 22
-    ws.Rows(r1).RowHeight = 15
-    ws.Rows(r1 + 1).RowHeight = 22
-    ws.Rows(r2).RowHeight = 15
-    ws.Rows(r2 + 1).RowHeight = 22
-    ws.Rows(r3).RowHeight = 15
-    ws.Rows(r3 + 1).RowHeight = 22
-    ws.Rows(r4).RowHeight = 15
-    ws.Rows(r4 + 1).RowHeight = 24
-    ws.Rows(r5).RowHeight = 15
-    ws.Rows(r5 + 1).RowHeight = 22
-    ws.Rows(r_footer + 1).RowHeight = 14
-
-    # 1. Main Header
-    h_rng = ws.Range(ws.Cells(r_header, 2), ws.Cells(r_header, 7))
-    h_rng.Merge()
-    h_rng.Value = "🌱 FİDE PALET TANITIM KARTI"
-    h_rng.Font.Name = "Segoe UI"
-    h_rng.Font.Size = 13
-    h_rng.Font.Bold = True
-    h_rng.Font.Color = rgb_to_int(255, 255, 255)
-    h_rng.Interior.Color = rgb_to_int(27, 67, 50) # #1B4332 Dark Green
-    h_rng.HorizontalAlignment = -4108
-    h_rng.VerticalAlignment = -4108
-
-    # 2. Subheader
-    sub_left = ws.Range(ws.Cells(r_sub, 2), ws.Cells(r_sub, 5))
-    sub_left.Merge()
-    sub_left.Value = f"  LOT NO: {lot_no}  |  SİPARİŞ NO: {order_no}"
-    sub_left.Font.Name = "Segoe UI"
-    sub_left.Font.Size = 9.5
-    sub_left.Font.Bold = True
-    sub_left.Font.Color = rgb_to_int(27, 67, 50)
-    sub_left.Interior.Color = rgb_to_int(232, 245, 233)
-    sub_left.HorizontalAlignment = -4131
-    sub_left.VerticalAlignment = -4108
-
-    sub_right = ws.Range(ws.Cells(r_sub, 6), ws.Cells(r_sub, 7))
-    sub_right.Merge()
-    sub_right.Value = f"PALET NO: {card_no:02d} / {total_cards:02d}"
-    sub_right.Font.Name = "Segoe UI"
-    sub_right.Font.Size = 11
-    sub_right.Font.Bold = True
-    sub_right.Font.Color = rgb_to_int(255, 255, 255)
-    sub_right.Interior.Color = rgb_to_int(198, 40, 40) # Red Badge
-    sub_right.HorizontalAlignment = -4108
-    sub_right.VerticalAlignment = -4108
-
-    # Rows 1 to 3
-    format_field(ws, r1, 2, 4, "MÜŞTERİ / FİRMA ADI", cust_name, True)
-    format_field(ws, r1, 5, 7, "FİDE TÜRÜ (ÜRÜN)", f_type, True)
-
-    format_field(ws, r2, 2, 4, "ÇEŞİT / VARYETE", variety, True)
-    format_field(ws, r2, 5, 7, "TOHUM EKİM TARİHİ", sow_date, False)
-
-    format_field(ws, r3, 2, 3, "TESLİM / ÇIKIŞ TARİHİ", del_date, False)
-    format_field(ws, r3, 4, 5, "VİYOL GÖZ SAYISI", f"{cell_count} Gözlü", False)
-    format_field(ws, r3, 6, 7, "PALETTEKİ VİYOL ADEDİ", f"{viols_per_pallet} Kasa/Viyol", False)
-
-    # Row 4: Total Seedlings & Status
-    seedling_box = ws.Range(ws.Cells(r4, 2), ws.Cells(r4 + 1, 4))
-    seedling_box.Merge()
-    seedling_box.Value = f"TOPLAM FİDE: {total_seedlings:,} ADET".replace(",", ".")
-    seedling_box.Font.Name = "Segoe UI"
-    seedling_box.Font.Size = 12
-    seedling_box.Font.Bold = True
-    seedling_box.Font.Color = rgb_to_int(27, 67, 50)
-    seedling_box.Interior.Color = rgb_to_int(216, 243, 220)
-    seedling_box.HorizontalAlignment = -4108
-    seedling_box.VerticalAlignment = -4108
-
-    format_field(ws, r4, 5, 7, "AŞILAMA & İLAÇLAMA DURUMU", status_text, False)
-
-    # Row 5: Responsible & Quality
-    resp_box = ws.Range(ws.Cells(r5, 2), ws.Cells(r5 + 1, 4))
-    resp_box.Merge()
-    resp_box.Value = f"SORUMLU: {responsible}"
-    resp_box.Font.Name = "Segoe UI"
-    resp_box.Font.Size = 9
-    resp_box.Font.Bold = True
-    resp_box.Font.Color = rgb_to_int(50, 50, 50)
-    resp_box.Interior.Color = rgb_to_int(248, 249, 250)
-    resp_box.HorizontalAlignment = -4108
-    resp_box.VerticalAlignment = -4108
-
-    qual_box = ws.Range(ws.Cells(r5, 5), ws.Cells(r5 + 1, 7))
-    qual_box.Merge()
-    qual_box.Value = "KALİTE ONAYI: [ ONAYLANDI ]"
-    qual_box.Font.Name = "Segoe UI"
-    qual_box.Font.Size = 9.5
-    qual_box.Font.Bold = True
-    qual_box.Font.Color = rgb_to_int(27, 94, 32)
-    qual_box.Interior.Color = rgb_to_int(232, 245, 233)
-    qual_box.HorizontalAlignment = -4108
-    qual_box.VerticalAlignment = -4108
-
-    # Outer Border (Medium Green)
-    card_rng = ws.Range(ws.Cells(r_header, 2), ws.Cells(r5 + 1, 7))
-    for edge in [7, 8, 9, 10]: # xlEdgeLeft, xlEdgeTop, xlEdgeBottom, xlEdgeRight
-        card_rng.Borders(edge).LineStyle = 1 # xlContinuous
-        card_rng.Borders(edge).Weight = -4138 # xlMedium
-        card_rng.Borders(edge).Color = rgb_to_int(27, 67, 50)
-
-    # Cut Line
-    if card_no < total_cards:
-        cut_rng = ws.Range(ws.Cells(r_footer + 1, 2), ws.Cells(r_footer + 1, 7))
-        cut_rng.Merge()
-        cut_rng.Value = "- - - - - - - - - - - - - - - - - - - - ✂ MAKASLA KESİM ÇİZGİSİ ✂ - - - - - - - - - - - - - - - - - - - -"
-        cut_rng.Font.Name = "Segoe UI"
-        cut_rng.Font.Size = 8
-        cut_rng.Font.Italic = True
-        cut_rng.Font.Color = rgb_to_int(160, 160, 160)
-        cut_rng.HorizontalAlignment = -4108
-        cut_rng.VerticalAlignment = -4108
-
-def build_all_cards_py(ws_cards, total_cards=12):
-    cust_name = "ÖRNEK TARIM İŞLETMESİ A.Ş."
-    f_type = "DOMATES"
-    variety = "TORRY F1"
-    lot_no = "LOT-2026/089"
-    order_no = "SIP-45802"
-    sow_date = "21.08.2026"
-    del_date = "10.09.2026"
-    cell_count = 216
-    viols_per_pallet = 15
-    total_seedlings = cell_count * viols_per_pallet
-    status_text = "AŞILI - KORUYUCU İLAÇLAMA YAPILDI"
-    responsible = "Zir. Müh. Ahmet YILMAZ"
-
-    card_height = 13
-    card_spacing = 2
-
-    ws_cards.ResetAllPageBreaks()
-    for i in range(1, total_cards + 1):
-        start_row = (i - 1) * (card_height + card_spacing) + 2
-        build_single_card_py(ws_cards, start_row, i, total_cards, cust_name, f_type, variety, lot_no, order_no, sow_date, del_date, cell_count, viols_per_pallet, total_seedlings, status_text, responsible)
-        if (i % 2 == 0) and (i < total_cards):
-            ws_cards.HPageBreaks.Add(Before=ws_cards.Rows(start_row + card_height + card_spacing))
-
-    last_card_end = (total_cards - 1) * (card_height + card_spacing) + 2 + card_height
-    ws_cards.PageSetup.PrintArea = f"$B$1:$G${last_card_end}"
 
 def create_pallet_workbook():
     workspace = os.path.abspath(os.getcwd())
-    target_path = os.path.join(workspace, "Palet_Karti_Fide_Sistemi.xlsm")
+    target_path = os.path.join(workspace, "Palet_Karti_Sistemi.xlsm")
+    old_target_path = os.path.join(workspace, "Palet_Karti_Fide_Sistemi.xlsm")
     original = os.path.join(workspace, "Book1.xlsm")
     backup_book1 = os.path.join(workspace, "Book1_Yedek.xlsm")
 
@@ -198,24 +19,33 @@ def create_pallet_workbook():
         try:
             import shutil
             shutil.copy2(original, backup_book1)
-            print(f"Original Book1.xlsm backed up as {backup_book1}")
+            print(f"Orijinal Book1.xlsm yedeklendi: {backup_book1}")
         except Exception as e:
-            print(f"Backup notice: {e}")
+            print(f"Yedekleme uyarisi: {e}")
 
-    if os.path.exists(target_path):
-        try:
-            os.remove(target_path)
-        except Exception as e:
-            print(f"Notice on removing existing target_path: {e}")
+    # Remove target file if exists (checking for file locks)
+    for path_to_clean in [target_path, old_target_path]:
+        if os.path.exists(path_to_clean):
+            try:
+                os.remove(path_to_clean)
+            except PermissionError:
+                print(f"HATA: '{os.path.basename(path_to_clean)}' dosyasi su anda baska bir programda (muhtemelen Excel) acik!")
+                print("Lutfen dosyayi kapatin ve komutu tekrar calistirin.")
+                return False
+            except Exception as e:
+                print(f"Eski dosya temizleme uyarisi ({path_to_clean}): {e}")
 
-    excel = win32com.client.DispatchEx("Excel.Application")
-    excel.Visible = False
-    excel.DisplayAlerts = False
+    excel = None
+    wb = None
 
     try:
+        excel = win32com.client.DispatchEx("Excel.Application")
+        excel.Visible = False
+        excel.DisplayAlerts = False
+
         wb = excel.Workbooks.Add()
-        
-        # Ensure we have 2 sheets
+
+        # Ensure exactly 2 sheets
         while wb.Sheets.Count < 2:
             wb.Sheets.Add(After=wb.Sheets(wb.Sheets.Count))
         while wb.Sheets.Count > 2:
@@ -245,7 +75,7 @@ def create_pallet_workbook():
         # Title Header
         title_rng = ws_input.Range("B2:G2")
         title_rng.Merge()
-        title_rng.Value = "🌱 FİDE PALET KARTI YÖNETİM & BASKI SİSTEMİ"
+        title_rng.Value = "📦 PALET KARTI YÖNETİM & BASKI SİSTEMİ"
         title_rng.Font.Name = "Segoe UI"
         title_rng.Font.Size = 16
         title_rng.Font.Bold = True
@@ -265,10 +95,10 @@ def create_pallet_workbook():
         sub_rng.HorizontalAlignment = -4108
         ws_input.Rows(3).RowHeight = 20
 
-        # Section 1 Header: Parti & Müşteri Bilgileri
+        # Section 1 Header: Parti & Ürün Bilgileri
         sec1 = ws_input.Range("B5:D5")
         sec1.Merge()
-        sec1.Value = "📋 PARTİ VE FİDE BİLGİLERİ"
+        sec1.Value = "📋 PARTİ VE ÜRÜN BİLGİLERİ"
         sec1.Font.Name = "Segoe UI"
         sec1.Font.Size = 11
         sec1.Font.Bold = True
@@ -277,19 +107,22 @@ def create_pallet_workbook():
         sec1.HorizontalAlignment = -4131
         ws_input.Rows(5).RowHeight = 24
 
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        deliv_str = (datetime.now() + timedelta(days=14)).strftime("%Y-%m-%d")
+
         fields = [
-            (6, "Müşteri / Firma Adı:", "ÖRNEK TARIM İŞLETMESİ A.Ş."),
-            (7, "Fide Türü (Ürün):", "DOMATES"),
-            (8, "Çeşit / Varyete:", "TORRY F1"),
-            (9, "Parti / Lot Numarası:", "LOT-2026/089"),
-            (10, "Sipariş / Fatura No:", "SIP-45802"),
-            (11, "Tohum / Ekim Tarihi:", "2026-08-21"),
-            (12, "Tahmini Teslim / Çıkış Tarihi:", "2026-09-10"),
-            (13, "Viyol Tipi (Göz Sayısı):", 216),
-            (14, "Paletteki Viyol (Kasa) Adedi:", 15),
-            (15, "Palet Başına Toplam Fide:", "=C13*C14"),
-            (16, "Aşılama / İlaçlama Durumu:", "AŞILI - KORUYUCU İLAÇLAMA YAPILDI"),
-            (17, "Kalite & Kontrol Sorumlusu:", "Zir. Müh. Ahmet YILMAZ")
+            (6, "Müşteri / Firma Adı:", ""),
+            (7, "Ürün Türü / Cinsi:", ""),
+            (8, "Çeşit / Model:", ""),
+            (9, "Parti / Lot Numarası:", "LOT-2026/001"),
+            (10, "Sipariş / Sevk No:", "SIP-1001"),
+            (11, "Üretim / Hazırlık Tarihi:", today_str),
+            (12, "Tahmini Teslim / Sevk Tarihi:", deliv_str),
+            (13, "Kasa / Koli İçi Adet (Göz):", 216),
+            (14, "Paletteki Koli / Kasa Adedi:", 15),
+            (15, "Palet Başına Toplam Adet:", "=C13*C14"),
+            (16, "Kalite / Kontrol Durumu:", "KONTROL EDİLDİ - UYGUN"),
+            (17, "Sorumlu Personel:", "")
         ]
 
         for row_idx, label, default_val in fields:
@@ -321,10 +154,30 @@ def create_pallet_workbook():
                 val_rng.NumberFormat = "#,##0"
                 val_rng.HorizontalAlignment = -4108
             elif row_idx == 15:
-                val_rng.NumberFormat = '#,##0" Fide / Palet"'
+                val_rng.NumberFormat = '#,##0" Adet / Palet"'
                 val_rng.Font.Color = rgb_to_int(27, 106, 45)
                 val_rng.Interior.Color = rgb_to_int(232, 248, 237)
                 val_rng.HorizontalAlignment = -4108
+
+        # Data Validation (Dropdown) for Kasa / Koli İçi Adet (C13)
+        try:
+            val_box = ws_input.Range("C13:D13").Validation
+            val_box.Delete()
+            val_box.Add(3, 1, 1, "45, 77, 104, 150, 200, 216, 288, 384")
+            val_box.IgnoreBlank = True
+            val_box.InCellDropdown = True
+        except Exception as e:
+            print(f"Veri dogrulama (C13) uyarisi: {e}")
+
+        # Data Validation (Dropdown) for Kalite / Kontrol Durumu (C16)
+        try:
+            val_status = ws_input.Range("C16:D16").Validation
+            val_status.Delete()
+            val_status.Add(3, 1, 1, "KONTROL EDİLDİ - UYGUN, BİRİNCİ KALİTE, STANDART SEVKİYAT, İLAÇLI - KORUMALI, ÖZEL SİPARİŞ")
+            val_status.IgnoreBlank = True
+            val_status.InCellDropdown = True
+        except Exception as e:
+            print(f"Veri dogrulama (C16) uyarisi: {e}")
 
         # Section 2: Basılacak Kart Adedi
         sec2 = ws_input.Range("B19:D19")
@@ -394,53 +247,28 @@ def create_pallet_workbook():
         desc_rng.WrapText = True
 
         # ----------------------------------------------------
-        # 2. SETUP PALET_KARTLARI (TEMPLATE SHEET)
+        # 2. SETUP PALET_KARTLARI SHEET
         # ----------------------------------------------------
         ws_cards.Tab.Color = rgb_to_int(30, 74, 140)
 
-        # Page Setup for PALET_KARTLARI
-        ws_cards.PageSetup.Orientation = 1 # xlPortrait
-        ws_cards.PageSetup.PaperSize = 9 # xlPaperA4
-        ws_cards.PageSetup.LeftMargin = excel.InchesToPoints(0.4)
-        ws_cards.PageSetup.RightMargin = excel.InchesToPoints(0.4)
-        ws_cards.PageSetup.TopMargin = excel.InchesToPoints(0.4)
-        ws_cards.PageSetup.BottomMargin = excel.InchesToPoints(0.4)
-        ws_cards.PageSetup.HeaderMargin = 0
-        ws_cards.PageSetup.FooterMargin = 0
-        ws_cards.PageSetup.CenterHorizontally = True
-
-        # Columns for Card Layout
-        ws_cards.Columns("A").ColumnWidth = 2
-        ws_cards.Columns("B").ColumnWidth = 14
-        ws_cards.Columns("C").ColumnWidth = 18
-        ws_cards.Columns("D").ColumnWidth = 14
-        ws_cards.Columns("E").ColumnWidth = 14
-        ws_cards.Columns("F").ColumnWidth = 14
-        ws_cards.Columns("G").ColumnWidth = 16
-        ws_cards.Columns("H").ColumnWidth = 2
-
-        # Populate initial 12 cards
-        print("Populating initial 12 cards on PALET_KARTLARI...")
-        build_all_cards_py(ws_cards, 12)
-
         # ----------------------------------------------------
-        # 3. ADD VBA MACROS TO WORKBOOK
+        # 3. ADD VBA MACRO MODULE
         # ----------------------------------------------------
-        vba_code = """Attribute VB_Name = "Modul_PaletKarti"
-Option Explicit
+        vba_code = """Option Explicit
 
 ' ==========================================================
-' FİDE PALET KARTI OTOMASYON MODÜLÜ
+' PALET KARTI OTOMASYON MODÜLÜ
 ' ==========================================================
 
 Public Sub Makro_KartlariGoster()
     Dim wsInput As Worksheet, wsCards As Worksheet
     Dim totalCards As Long, i As Long
     Dim startRow As Long, cardHeight As Long, cardSpacing As Long
-    Dim custName As String, fType As String, variety As String
-    Dim lotNo As String, orderNo As String, sowDate As String, delDate As String
+    Dim custName As String, pType As String, variety As String
+    Dim lotNo As String, orderNo As String, prodDate As String, delDate As String
     Dim violsPerPallet As Variant, cellCount As Variant, totalSeedlings As Variant
     Dim statusText As String, responsible As String
+    Dim lastCardEndRow As Long
     
     On Error GoTo ErrHandler
     Application.ScreenUpdating = False
@@ -449,7 +277,7 @@ Public Sub Makro_KartlariGoster()
     Set wsInput = ThisWorkbook.Sheets("VERI_GIRIS")
     Set wsCards = ThisWorkbook.Sheets("PALET_KARTLARI")
     
-    totalCards = wsInput.Range("C20").Value
+    totalCards = Val(wsInput.Range("C20").Value)
     If totalCards < 1 Then
         MsgBox "Lütfen en az 1 adet palet kartı sayısı giriniz!", vbExclamation, "Geçersiz Sayı"
         GoTo CleanExit
@@ -461,12 +289,23 @@ Public Sub Makro_KartlariGoster()
     End If
     
     custName = Trim(wsInput.Range("C6").Value)
-    fType = Trim(wsInput.Range("C7").Value)
+    pType = Trim(wsInput.Range("C7").Value)
     variety = Trim(wsInput.Range("C8").Value)
     lotNo = Trim(wsInput.Range("C9").Value)
     orderNo = Trim(wsInput.Range("C10").Value)
-    sowDate = Format(wsInput.Range("C11").Value, "dd.mm.yyyy")
-    delDate = Format(wsInput.Range("C12").Value, "dd.mm.yyyy")
+    
+    If IsDate(wsInput.Range("C11").Value) Then
+        prodDate = Format(wsInput.Range("C11").Value, "dd.mm.yyyy")
+    Else
+        prodDate = Trim(wsInput.Range("C11").Text)
+    End If
+    
+    If IsDate(wsInput.Range("C12").Value) Then
+        delDate = Format(wsInput.Range("C12").Value, "dd.mm.yyyy")
+    Else
+        delDate = Trim(wsInput.Range("C12").Text)
+    End If
+    
     cellCount = wsInput.Range("C13").Value
     violsPerPallet = wsInput.Range("C14").Value
     totalSeedlings = wsInput.Range("C15").Value
@@ -475,6 +314,22 @@ Public Sub Makro_KartlariGoster()
     
     wsCards.Cells.Clear
     wsCards.ResetAllPageBreaks
+    
+    ' Page Setup
+    With wsCards.PageSetup
+        .Orientation = xlPortrait
+        .PaperSize = xlPaperA4
+        .LeftMargin = Application.InchesToPoints(0.4)
+        .RightMargin = Application.InchesToPoints(0.4)
+        .TopMargin = Application.InchesToPoints(0.4)
+        .BottomMargin = Application.InchesToPoints(0.4)
+        .HeaderMargin = 0
+        .FooterMargin = 0
+        .CenterHorizontally = True
+        .FitToPagesWide = 1
+        .FitToPagesTall = False
+        .Zoom = False
+    End With
     
     wsCards.Columns("A").ColumnWidth = 2
     wsCards.Columns("B").ColumnWidth = 14
@@ -490,14 +345,13 @@ Public Sub Makro_KartlariGoster()
     
     For i = 1 To totalCards
         startRow = (i - 1) * (cardHeight + cardSpacing) + 2
-        Call BuildSingleCard(wsCards, startRow, i, totalCards, custName, fType, variety, lotNo, orderNo, sowDate, delDate, cellCount, violsPerPallet, totalSeedlings, statusText, responsible)
+        Call BuildSingleCard(wsCards, startRow, i, totalCards, custName, pType, variety, lotNo, orderNo, prodDate, delDate, cellCount, violsPerPallet, totalSeedlings, statusText, responsible)
         
         If (i Mod 2 = 0) And (i < totalCards) Then
             wsCards.HPageBreaks.Add Before:=wsCards.Rows(startRow + cardHeight + cardSpacing)
         End If
     Next i
     
-    Dim lastCardEndRow As Long
     lastCardEndRow = (totalCards - 1) * (cardHeight + cardSpacing) + 2 + cardHeight
     wsCards.PageSetup.PrintArea = "$B$1:$G$" & lastCardEndRow
     
@@ -517,8 +371,8 @@ CleanExit:
 End Sub
 
 Private Sub BuildSingleCard(ws As Worksheet, r As Long, cardNo As Long, totalCards As Long, _
-                            custName As String, fType As String, variety As String, _
-                            lotNo As String, orderNo As String, sowDate As String, delDate As String, _
+                            custName As String, pType As String, variety As String, _
+                            lotNo As String, orderNo As String, prodDate As String, delDate As String, _
                             cellCount As Variant, violsPerPallet As Variant, totalSeedlings As Variant, _
                             statusText As String, responsible As String)
     Dim rngCard As Range
@@ -549,7 +403,7 @@ Private Sub BuildSingleCard(ws As Worksheet, r As Long, cardNo As Long, totalCar
     
     With ws.Range(ws.Cells(rHeader, 2), ws.Cells(rHeader, 7))
         .Merge
-        .Value = "🌱 FİDE PALET TANITIM KARTI"
+        .Value = "📦 PALET TANITIM KARTI"
         .Font.Name = "Segoe UI"
         .Font.Size = 13
         .Font.Bold = True
@@ -584,18 +438,18 @@ Private Sub BuildSingleCard(ws As Worksheet, r As Long, cardNo As Long, totalCar
     End With
     
     Call FormatField(ws, r1, 2, 4, "MÜŞTERİ / FİRMA ADI", custName, True)
-    Call FormatField(ws, r1, 5, 7, "FİDE TÜRÜ (ÜRÜN)", fType, True)
+    Call FormatField(ws, r1, 5, 7, "ÜRÜN / TÜR", pType, True)
     
-    Call FormatField(ws, r2, 2, 4, "ÇEŞİT / VARYETE", variety, True)
-    Call FormatField(ws, r2, 5, 7, "TOHUM EKİM TARİHİ", sowDate, False)
+    Call FormatField(ws, r2, 2, 4, "ÇEŞİT / MODEL", variety, True)
+    Call FormatField(ws, r2, 5, 7, "ÜRETİM / HAZIRLIK TARİHİ", prodDate, False)
     
-    Call FormatField(ws, r3, 2, 3, "TESLİM / ÇIKIŞ TARİHİ", delDate, False)
-    Call FormatField(ws, r3, 4, 5, "VİYOL GÖZ SAYISI", cellCount & " Gözlü", False)
-    Call FormatField(ws, r3, 6, 7, "PALETTEKİ VİYOL ADEDİ", violsPerPallet & " Kasa/Viyol", False)
+    Call FormatField(ws, r3, 2, 3, "TESLİM / SEVK TARİHİ", delDate, False)
+    Call FormatField(ws, r3, 4, 5, "BİRİM / KASA İÇİ ADET", cellCount & " Adet", False)
+    Call FormatField(ws, r3, 6, 7, "PALETTEKİ KASA / KOLİ ADEDİ", violsPerPallet & " Koli/Kasa", False)
     
     With ws.Range(ws.Cells(r4, 2), ws.Cells(r4 + 1, 4))
         .Merge
-        .Value = "TOPLAM FİDE: " & Format(totalSeedlings, "#,##0") & " ADET"
+        .Value = "TOPLAM ÜRÜN: " & Format(totalSeedlings, "#,##0") & " ADET"
         .Font.Name = "Segoe UI"
         .Font.Size = 12
         .Font.Bold = True
@@ -605,11 +459,11 @@ Private Sub BuildSingleCard(ws As Worksheet, r As Long, cardNo As Long, totalCar
         .VerticalAlignment = xlCenter
     End With
     
-    Call FormatField(ws, r4, 5, 7, "AŞILAMA & İLAÇLAMA DURUMU", statusText, False)
+    Call FormatField(ws, r4, 5, 7, "KALİTE & KONTROL DURUMU", statusText, False)
     
     With ws.Range(ws.Cells(r5, 2), ws.Cells(r5 + 1, 4))
         .Merge
-        .Value = "SORUMLU: " & responsible
+        .Value = "SORUMLU: " & IIf(Len(responsible) > 0, responsible, "-")
         .Font.Name = "Segoe UI"
         .Font.Size = 9
         .Font.Bold = True
@@ -694,15 +548,22 @@ End Sub
 
 Public Sub Makro_PDF_Kaydet()
     Dim wsCards As Worksheet
-    Dim pdfPath As String, timeStamp As String
+    Dim pdfPath As String, timeStamp As String, desktopDir As String
+    Dim objShell As Object
     
     Call Makro_KartlariGoster
     Set wsCards = ThisWorkbook.Sheets("PALET_KARTLARI")
     
-    timeStamp = Format(Now, "yyyy-mm-dd_hh-nn-ss")
-    pdfPath = Environ("USERPROFILE") & "\\Desktop\\Fide_Palet_Kartlari_" & timeStamp & ".pdf"
-    
     On Error Resume Next
+    Set objShell = CreateObject("WScript.Shell")
+    desktopDir = objShell.SpecialFolders("Desktop")
+    If Len(desktopDir) = 0 Then
+        desktopDir = Environ("USERPROFILE") & "\\Desktop"
+    End If
+    
+    timeStamp = Format(Now, "yyyy-mm-dd_hh-nn-ss")
+    pdfPath = desktopDir & "\\Palet_Kartlari_" & timeStamp & ".pdf"
+    
     wsCards.ExportAsFixedFormat Type:=xlTypePDF, Filename:=pdfPath, Quality:=xlQualityStandard, _
                                 IncludeDocProperties:=True, IgnorePrintAreas:=False, OpenAfterPublish:=True
     
@@ -731,7 +592,7 @@ End Sub
         vb_comp = wb.VBProject.VBComponents.Add(1)
         vb_comp.Name = "Modul_PaletKarti"
         vb_comp.CodeModule.AddFromString(vba_code)
-        print("VBA Module Modul_PaletKarti added successfully.")
+        print("VBA Modülü (Modul_PaletKarti) eklendi.")
 
         # ----------------------------------------------------
         # 4. ADD ACTION BUTTONS ON VERI_GIRIS SHEET
@@ -764,32 +625,49 @@ End Sub
             shape.Line.Visible = False
             shape.OnAction = macro_name
 
+        # ----------------------------------------------------
+        # 5. INITIALIZE CARDS USING THE VBA MACRO (SINGLE SOURCE OF TRUTH)
+        # ----------------------------------------------------
+        print("VBA Makrosu çalıştırılarak ilk kartlar oluşturuluyor...")
+        excel.Run(f"'{wb.Name}'!Makro_KartlariGoster")
+
+        # Focus back on VERI_GIRIS
         ws_input.Activate()
-        ws_input.Range("C20").Select()
+        ws_input.Range("C6").Select()
 
-        # Save as target_path (.xlsm)
+        # Save workbooks
         wb.SaveAs(target_path, 52)
-        print(f"Saved: {target_path}")
+        print(f"Başarıyla kaydedildi: {target_path}")
 
-        # Also save copy as Book1.xlsm
         wb.SaveCopyAs(original)
-        print(f"Main copy updated: {original}")
+        print(f"Kopya kaydedildi: {original}")
 
         wb.Close(False)
-        print("Done!")
+        print("İşlem tamamlandı!")
         return True
 
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"Hata: {e}", file=sys.stderr)
         import traceback
         traceback.print_exc()
         return False
     finally:
-        excel.Quit()
+        try:
+            if wb is not None:
+                del wb
+        except Exception:
+            pass
+        try:
+            if excel is not None:
+                excel.Quit()
+                del excel
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     success = create_pallet_workbook()
     if success:
-        print("EXCEL CREATION SUCCEEDED!")
+        print("EXCEL DOSYASI BAŞARIYLA OLUŞTURULDU!")
     else:
-        print("EXCEL CREATION FAILED!")
+        print("EXCEL OLUŞTURMA BAŞARISIZ OLDU!")
+        sys.exit(1)

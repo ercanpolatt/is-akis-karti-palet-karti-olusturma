@@ -1,0 +1,16 @@
+# Excel gecici kilit dosyalari
+~$*.xlsx
+~$*.xlsm
+~$*.xls
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Gecici ve yedek dosyalar
+*.tmp
+*.bak
