@@ -2,6 +2,21 @@
 
 Üretim ve sevkiyat süreçlerinde palet tanıtım kartlarını dinamik olarak oluşturan, A4 sayfa yapısına göre düzenleyen ve yazdırma/PDF işlemlerini otomatikleştiren Excel tabanlı yönetim sistemi.
 
+## 🎬 Tanıtım ve Kullanım Videosu
+
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=BoEO4YM4VzQ" target="_blank" title="YouTube'da İzle">
+    <img src="https://img.youtube.com/vi/BoEO4YM4VzQ/maxresdefault.jpg" alt="Üretim, Depo & Sevkiyat Süreçlerinde Excel/Python Otomasyonu: İş Akış Kartı Sistemi" width="750" />
+  </a>
+  <br>
+  <p>
+    <a href="https://www.youtube.com/watch?v=BoEO4YM4VzQ" target="_blank">
+      <img src="https://img.shields.io/badge/YouTube-Videoyu%20%C4%B0zle-red?style=for-the-badge&logo=youtube" alt="YouTube İzle" />
+    </a>
+  </p>
+  <p><em>(Sistemin canlı çalışmasını ve arayüz kullanımını izlemek için yukarıdaki görsele veya butona tıklayabilirsiniz.)</em></p>
+</div>
+
 ## 🚀 Özellikler
 
 - **Veri Giriş Arayüzü (`VERI_GIRIS`):** Parti/lot, sipariş, sevk tarihi, koli adedi ve kalite durumu gibi bilgilerin girilebildiği kullanıcı dostu form.

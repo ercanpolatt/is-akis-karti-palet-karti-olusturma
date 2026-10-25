@@ -10,7 +10,7 @@ def rgb_to_int(r, g, b):
 def create_pallet_workbook():
     workspace = os.path.abspath(os.getcwd())
     target_path = os.path.join(workspace, "Palet_Karti_Sistemi.xlsm")
-    old_target_path = os.path.join(workspace, "Palet_Karti_Fide_Sistemi.xlsm")
+    old_target_path = os.path.join(workspace, "Palet_Karti_Yedek_Sistemi.xlsm")
     original = os.path.join(workspace, "Book1.xlsm")
     backup_book1 = os.path.join(workspace, "Book1_Yedek.xlsm")
 
