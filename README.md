@@ -5,7 +5,7 @@
 ## 🎬 Tanıtım ve Kullanım Videosu
 
 <div align="center">
-  <video src="https://github.com/user-attachments/assets/a60a5c64-85b6-4cd3-b4c5-9e1c98abd73d" width="100%" controls="controls">
+  <video src="https://github.com/user-attachments/assets/30e471a5-3b2d-4c0e-b242-419b6d67f971" width="100%" controls="controls">
     Tarayıcınız video etiketini desteklemiyor.
   </video>
   <br>
